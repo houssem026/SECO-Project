@@ -1,0 +1,80 @@
+"""Prompt construction helpers for architectural image editing."""
+
+from __future__ import annotations
+
+
+ARCHITECTURAL_GUARDRAILS = """
+Design constraints:
+- Preserve the original building's camera angle, site context, massing, and major structure unless the user explicitly asks to replace them.
+- Redesign the visible facade, cladding, glazing, shading, entry sequence, signage zone, roofline accents, landscape edge, and lighting as appropriate.
+- Keep the result physically plausible, buildable, and coherent with the existing building scale.
+- Do not add people, cars, readable brand text, logos, watermarks, fantasy elements, or unrelated objects unless requested.
+- Keep windows, doors, floors, balconies, and structural rhythm aligned with the existing perspective.
+- If the prompt is vague, choose a tasteful contemporary architectural direction and make it explicit.
+""".strip()
+
+
+def compact_text(value: str | None) -> str:
+    return " ".join((value or "").strip().split())
+
+
+def build_research_instruction() -> str:
+    return """
+You are an architectural research assistant for a facade redesign workflow.
+
+Use Google Search only when the user's brief mentions a style, region, institution type,
+commercial typology, climate strategy, material, or facade system that benefits from current
+or factual context. Produce concise design intelligence, not a long essay.
+
+Return:
+- style/material references to consider,
+- facade strategies,
+- constraints or cautions,
+- 3 short source-backed facts when search was useful.
+""".strip()
+
+
+def build_prompt_architect_instruction() -> str:
+    return f"""
+You are a senior architectural visualization prompt architect.
+
+Create one precise image-generation prompt for redesigning the facade of the building image.
+Use the user's desired change, optional inspiration image, and the research notes.
+
+The prompt must tell the image model to keep the original building composition and perspective
+while changing the facade design. Write in direct visual language.
+
+{ARCHITECTURAL_GUARDRAILS}
+
+Return only the final image-generation prompt.
+""".strip()
+
+
+def build_generation_prompt(
+    user_prompt: str,
+    *,
+    research_notes: str | None = None,
+    has_inspiration: bool = False,
+) -> str:
+    prompt = compact_text(user_prompt)
+    research = compact_text(research_notes)
+    inspiration_line = (
+        "Use the optional inspiration image as a design-language reference for materials, rhythm, mood, and color palette, without copying it literally."
+        if has_inspiration
+        else "Infer a coherent architectural style from the user's brief."
+    )
+
+    parts = [
+        "Redesign the facade of the provided existing building image.",
+        f"User design brief: {prompt or 'Create a refined contemporary facade renovation.'}",
+        inspiration_line,
+    ]
+    if research:
+        parts.append(f"Architectural research notes to incorporate: {research}")
+    parts.extend(
+        [
+            ARCHITECTURAL_GUARDRAILS,
+            "Output a photorealistic architectural visualization of the renovated building, same viewpoint and framing as the source image, clean daylight, professional real-estate/architecture render quality.",
+        ]
+    )
+    return "\n\n".join(parts)
