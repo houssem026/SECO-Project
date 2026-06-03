@@ -4,15 +4,17 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 from pathlib import Path
 from typing import AsyncGenerator
+from urllib.parse import quote
 
 from typing_extensions import override
 
 from google.adk.agents import BaseAgent, LlmAgent, SequentialAgent
 from google.adk.agents.invocation_context import InvocationContext
 from google.adk.events import Event, EventActions
-from google.adk.tools import FunctionTool, google_search
+from google.adk.tools import google_search
 from google.genai import types
 
 from scripts.config import DesignerConfig, GenerationConfig, ModelConfig, VertexConfig, load_config
@@ -30,6 +32,18 @@ from scripts.prompting import (
 
 
 logger = logging.getLogger(__name__)
+
+
+def _markdown_asset_path(path_value: str | Path, base_dir: Path) -> str:
+    raw_path = str(path_value).strip()
+    if not raw_path or raw_path == ".":
+        return ""
+    path = Path(raw_path)
+    if not path.is_absolute():
+        markdown_path = path.as_posix()
+    else:
+        markdown_path = os.path.relpath(path, base_dir).replace(os.sep, "/")
+    return quote(markdown_path, safe="/._-")
 
 
 class ImageGenerationAgent(BaseAgent):
@@ -135,20 +149,30 @@ class MarkdownReportAgent(BaseAgent):
             if roadmap_candidate.exists():
                 roadmap_image_path = str(roadmap_candidate)
         implementation_plan = str(state.get("implementation_plan", "")).strip()
-        generation_prompt = str(state.get("generation_prompt", "")).strip()
+        roadmap_table = str(state.get("roadmap_table", "")).strip()
+        roadmap_markdown_path = (
+            _markdown_asset_path(roadmap_image_path, report_path.parent)
+            if roadmap_image_path
+            else ""
+        )
+        generated_markdown_path = (
+            _markdown_asset_path(generated_image_path, report_path.parent)
+            if generated_image_path.name
+            else ""
+        )
 
         lines = [
             "# Facade Transformation Implementation Report",
             "",
         ]
-        if roadmap_image_path:
-            lines.extend(["## Roadmap", "", f"![Roadmap]({roadmap_image_path})", ""])
+        if roadmap_markdown_path:
+            lines.extend(["## Roadmap", "", f"![Roadmap]({roadmap_markdown_path})", ""])
+        elif roadmap_table:
+            lines.extend(["## Roadmap", "", roadmap_table, ""])
         if implementation_plan:
             lines.extend([implementation_plan, ""])
-        if generated_image_path:
-            lines.extend(["## Generated Design", "", f"![Generated design]({generated_image_path})", ""])
-        if generation_prompt:
-            lines.extend(["## Image Generation Prompt", "", "```text", generation_prompt, "```", ""])
+        if generated_markdown_path:
+            lines.extend(["## Generated Design", "", f"![Generated design]({generated_markdown_path})", ""])
 
         report_path.write_text("\n".join(lines).strip() + "\n", encoding="utf-8")
         state_delta = {
@@ -208,7 +232,7 @@ def build_agent(
         + "\n\nGenerated image path:\n{generated_image_path}"
         + "\n\nImage model notes path:\n{notes_path}",
         description="Creates an execution roadmap, team plan, risks, and next actions for the facade transformation.",
-        tools=[google_search, FunctionTool(create_roadmap_image)],
+        tools=[google_search, create_roadmap_image],
         output_key="implementation_plan",
     )
 
