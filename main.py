@@ -50,6 +50,7 @@ async def run_pipeline(args: argparse.Namespace) -> dict[str, str]:
         ),
     )
     return {
+        "run_id": result.run_id,
         "final_text": result.final_text,
         "generated_image_path": result.generated_image_path,
         "prompt_path": result.prompt_path,
@@ -58,6 +59,7 @@ async def run_pipeline(args: argparse.Namespace) -> dict[str, str]:
         "implementation_plan": result.implementation_plan,
         "roadmap_image_path": result.roadmap_image_path,
         "implementation_report_path": result.implementation_report_path,
+        "history_db_path": result.history_db_path,
     }
 
 
@@ -65,6 +67,7 @@ def main() -> None:
     args = parse_args()
     result = asyncio.run(run_pipeline(args))
     print(result["final_text"] or "Facade design workflow finished.")
+    print(f"Run ID: {result['run_id']}")
     if result["generated_image_path"]:
         print(f"Generated image: {result['generated_image_path']}")
     if result["prompt_path"]:
@@ -75,6 +78,8 @@ def main() -> None:
         print(f"Roadmap image: {result['roadmap_image_path']}")
     if result["implementation_report_path"]:
         print(f"Implementation report: {result['implementation_report_path']}")
+    if result["history_db_path"]:
+        print(f"History database: {result['history_db_path']}")
 
 
 if __name__ == "__main__":

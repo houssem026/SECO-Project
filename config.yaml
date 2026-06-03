@@ -23,3 +23,7 @@ agents:
   prompt_name: PromptArchitect
   generation_name: BuildingImageGenerator
   planning_name: ImplementationPlanner
+
+history:
+  enabled: true
+  db_path: outputs/run_history.sqlite

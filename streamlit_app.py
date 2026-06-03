@@ -167,6 +167,9 @@ def _render_report(result: PipelineResult) -> None:
     if result.roadmap_image_path:
         st.markdown("#### Roadmap Image Path")
         st.code(result.roadmap_image_path)
+    if result.history_db_path:
+        st.markdown("#### Run History")
+        st.code(f"Run ID: {result.run_id}\nDatabase: {result.history_db_path}")
 
 
 async def _run_and_render(
@@ -343,6 +346,10 @@ def main() -> None:
         _render_report(result)
 
     with files_tab:
+        if result.history_db_path:
+            st.markdown("**Run history**")
+            st.code(f"Run ID: {result.run_id}\nDatabase: {result.history_db_path}")
+
         prompt_text = _read_optional_text(result.prompt_path)
         if prompt_text:
             st.markdown("**Image generation prompt**")

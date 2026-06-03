@@ -81,12 +81,19 @@ class AgentNamesConfig:
 
 
 @dataclass(frozen=True)
+class HistoryConfig:
+    enabled: bool
+    db_path: Path
+
+
+@dataclass(frozen=True)
 class DesignerConfig:
     app: AppConfig
     models: ModelConfig
     vertex: VertexConfig
     generation: GenerationConfig
     agents: AgentNamesConfig
+    history: HistoryConfig
 
     def with_updates(
         self,
@@ -145,6 +152,7 @@ def load_config(config_path: str | Path | None = None) -> DesignerConfig:
     vertex = _section(data, "vertex")
     generation = _section(data, "generation")
     agents = _section(data, "agents")
+    history = _section(data, "history")
 
     project = _optional_str(vertex.get("project")) or _optional_str(
         os.getenv("GOOGLE_CLOUD_PROJECT")
@@ -180,5 +188,9 @@ def load_config(config_path: str | Path | None = None) -> DesignerConfig:
             prompt_name=str(agents.get("prompt_name", "PromptArchitect")),
             generation_name=str(agents.get("generation_name", "BuildingImageGenerator")),
             planning_name=str(agents.get("planning_name", "ImplementationPlanner")),
+        ),
+        history=HistoryConfig(
+            enabled=_bool(history.get("enabled"), default=True),
+            db_path=Path(history.get("db_path", "outputs/run_history.sqlite")).expanduser().resolve(),
         ),
     )
