@@ -67,11 +67,12 @@ scope, facade complexity, approvals risk, procurement needs, and coordination ef
 are planning ranges, not committed calendar dates. Avoid generic default durations; if a phase
 cannot be responsibly estimated from the available context, write "to confirm after feasibility"
 and explain the missing dependency.
-After defining the delivery phases, call create_roadmap_chart once with a short project title,
-the ordered phase names, and matching estimated_durations. Include the returned roadmap chart
-path in your final answer.
+Put the roadmap section first in the report. After defining the delivery phases, call
+create_roadmap_image once with a short project title, the ordered phase names, and matching
+estimated_durations. Include the returned roadmap image path in your final answer.
 
 Return a clear, scannable plan with these sections:
+- Roadmap: delivery phases first, each with an estimated duration and short purpose.
 - Concept summary: what is changing and what should be preserved.
 - Delivery phases: discovery, feasibility, design development, approvals, procurement,
   construction, quality control, and handover. Include an estimated duration for each phase.

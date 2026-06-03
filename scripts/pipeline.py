@@ -40,7 +40,8 @@ class PipelineResult:
     notes_path: str
     model: str
     implementation_plan: str = ""
-    roadmap_chart_path: str = ""
+    roadmap_image_path: str = ""
+    implementation_report_path: str = ""
 
 
 @dataclass(frozen=True)
@@ -157,7 +158,8 @@ async def stream_pipeline(
         notes_path=_normalize_path(state.get("notes_path")),
         model=str(state.get("image_generation_model", run_config.models.image)),
         implementation_plan=str(state.get("implementation_plan", "")),
-        roadmap_chart_path=_normalize_path(state.get("roadmap_chart_path")),
+        roadmap_image_path=_normalize_path(state.get("roadmap_image_path")),
+        implementation_report_path=_normalize_path(state.get("implementation_report_path")),
     )
     yield PipelineUpdate(
         author=run_config.agents.orchestrator_name,

@@ -56,7 +56,8 @@ async def run_pipeline(args: argparse.Namespace) -> dict[str, str]:
         "notes_path": result.notes_path,
         "model": result.model,
         "implementation_plan": result.implementation_plan,
-        "roadmap_chart_path": result.roadmap_chart_path,
+        "roadmap_image_path": result.roadmap_image_path,
+        "implementation_report_path": result.implementation_report_path,
     }
 
 
@@ -70,8 +71,10 @@ def main() -> None:
         print(f"Prompt file: {result['prompt_path']}")
     if result["notes_path"]:
         print(f"Notes file: {result['notes_path']}")
-    if result["roadmap_chart_path"]:
-        print(f"Roadmap chart: {result['roadmap_chart_path']}")
+    if result["roadmap_image_path"]:
+        print(f"Roadmap image: {result['roadmap_image_path']}")
+    if result["implementation_report_path"]:
+        print(f"Implementation report: {result['implementation_report_path']}")
 
 
 if __name__ == "__main__":

@@ -20,7 +20,7 @@ from scripts.image_generator import (
     ImageGenerationRequest,
     generate_building_design,
 )
-from scripts.planning_tools import create_roadmap_chart
+from scripts.planning_tools import create_roadmap_image
 from scripts.prompting import (
     build_generation_prompt,
     build_implementation_planner_instruction,
@@ -114,6 +114,57 @@ class ImageGenerationAgent(BaseAgent):
         )
 
 
+class MarkdownReportAgent(BaseAgent):
+    """Custom ADK agent that stores the implementation report as Markdown."""
+
+    model_config = {"arbitrary_types_allowed": True}
+
+    @override
+    async def _run_async_impl(
+        self, ctx: InvocationContext
+    ) -> AsyncGenerator[Event, None]:
+        state = ctx.session.state
+        generated_image_path = Path(str(state.get("generated_image_path", "")))
+        output_dir = generated_image_path.parent if generated_image_path.name else Path("outputs")
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        report_path = output_dir / f"{generated_image_path.stem or 'facade-design'}-report.md"
+        roadmap_image_path = str(state.get("roadmap_image_path", ""))
+        if not roadmap_image_path:
+            roadmap_candidate = output_dir / f"{generated_image_path.stem or 'facade-design'}-roadmap.png"
+            if roadmap_candidate.exists():
+                roadmap_image_path = str(roadmap_candidate)
+        implementation_plan = str(state.get("implementation_plan", "")).strip()
+        generation_prompt = str(state.get("generation_prompt", "")).strip()
+
+        lines = [
+            "# Facade Transformation Implementation Report",
+            "",
+        ]
+        if roadmap_image_path:
+            lines.extend(["## Roadmap", "", f"![Roadmap]({roadmap_image_path})", ""])
+        if implementation_plan:
+            lines.extend([implementation_plan, ""])
+        if generated_image_path:
+            lines.extend(["## Generated Design", "", f"![Generated design]({generated_image_path})", ""])
+        if generation_prompt:
+            lines.extend(["## Image Generation Prompt", "", "```text", generation_prompt, "```", ""])
+
+        report_path.write_text("\n".join(lines).strip() + "\n", encoding="utf-8")
+        state_delta = {
+            "implementation_report_path": str(report_path),
+            "roadmap_image_path": roadmap_image_path,
+        }
+        yield Event(
+            author=self.name,
+            content=types.Content(
+                role="model",
+                parts=[types.Part(text=f"Implementation report saved: {report_path}")],
+            ),
+            actions=EventActions(state_delta=state_delta),
+        )
+
+
 def build_agent(
     *,
     text_model: str | None = None,
@@ -157,9 +208,11 @@ def build_agent(
         + "\n\nGenerated image path:\n{generated_image_path}"
         + "\n\nImage model notes path:\n{notes_path}",
         description="Creates an execution roadmap, team plan, risks, and next actions for the facade transformation.",
-        tools=[google_search, FunctionTool(create_roadmap_chart)],
+        tools=[google_search, FunctionTool(create_roadmap_image)],
         output_key="implementation_plan",
     )
+
+    report_agent = MarkdownReportAgent(name="ImplementationReportWriter")
 
     return SequentialAgent(
         name=config.agents.orchestrator_name,
@@ -168,8 +221,9 @@ def build_agent(
             prompt_agent,
             image_generation_agent,
             implementation_planner_agent,
+            report_agent,
         ],
-        description="Runs facade design specialists in order: research, prompt, image generation, implementation planning.",
+        description="Runs facade design specialists in order: research, prompt, image generation, implementation planning, report writing.",
     )
 
 
