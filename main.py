@@ -30,11 +30,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--image-size", choices=["1K", "2K", "4K"], help="Override output image size from config.")
     parser.add_argument("--text-model", help="Override text model from config.")
     parser.add_argument("--image-model", help="Override image model from config.")
-    parser.add_argument(
-        "--image-search-grounding",
-        action="store_true",
-        help="Enable image-model Google Search grounding for this run.",
-    )
     return parser.parse_args()
 
 
@@ -52,7 +47,6 @@ async def run_pipeline(args: argparse.Namespace) -> dict[str, str]:
             image_size=args.image_size,
             text_model=args.text_model,
             image_model=args.image_model,
-            image_search_grounding=args.image_search_grounding,
         ),
     )
     return {

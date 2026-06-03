@@ -51,7 +51,6 @@ class GenerationConfig:
     output_dir: Path
     aspect_ratio: str
     image_size: str
-    image_search_grounding: bool
 
     def with_updates(
         self,
@@ -59,7 +58,6 @@ class GenerationConfig:
         output_dir: Path | None = None,
         aspect_ratio: str | None = None,
         image_size: str | None = None,
-        image_search_grounding: bool | None = None,
     ) -> "GenerationConfig":
         return replace(
             self,
@@ -70,11 +68,6 @@ class GenerationConfig:
             ),
             aspect_ratio=aspect_ratio if aspect_ratio is not None else self.aspect_ratio,
             image_size=image_size if image_size is not None else self.image_size,
-            image_search_grounding=(
-                image_search_grounding
-                if image_search_grounding is not None
-                else self.image_search_grounding
-            ),
         )
 
 
@@ -179,10 +172,6 @@ def load_config(config_path: str | Path | None = None) -> DesignerConfig:
             output_dir=Path(generation.get("output_dir", "outputs")).expanduser().resolve(),
             aspect_ratio=str(generation.get("aspect_ratio", "16:9")),
             image_size=str(generation.get("image_size", "2K")),
-            image_search_grounding=_bool(
-                generation.get("image_search_grounding"),
-                default=False,
-            ),
         ),
         agents=AgentNamesConfig(
             orchestrator_name=str(agents.get("orchestrator_name", "FacadeDesignPipeline")),

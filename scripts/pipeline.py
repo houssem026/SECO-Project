@@ -30,7 +30,6 @@ class PipelineOverrides:
     image_size: str | None = None
     text_model: str | None = None
     image_model: str | None = None
-    image_search_grounding: bool = False
 
 
 @dataclass(frozen=True)
@@ -60,8 +59,6 @@ def build_run_config(overrides: PipelineOverrides) -> DesignerConfig:
         generation_config = generation_config.with_updates(aspect_ratio=overrides.aspect_ratio)
     if overrides.image_size:
         generation_config = generation_config.with_updates(image_size=overrides.image_size)
-    if overrides.image_search_grounding:
-        generation_config = generation_config.with_updates(image_search_grounding=True)
 
     model_config = config.models
     if overrides.image_model:

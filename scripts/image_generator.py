@@ -23,7 +23,6 @@ class ImageGenerationRequest:
     inspiration_image_path: Path | None = None
     aspect_ratio: str = "16:9"
     image_size: str = "2K"
-    use_google_search_grounding: bool = False
 
 
 @dataclass(frozen=True)
@@ -69,7 +68,6 @@ def generate_building_design(request: ImageGenerationRequest) -> ImageGeneration
             ]
         )
 
-    tools = [{"google_search": {}}] if request.use_google_search_grounding else None
     config_kwargs: dict[str, object] = {
         "response_modalities": ["TEXT", "IMAGE"],
         "image_config": types.ImageConfig(
@@ -77,8 +75,6 @@ def generate_building_design(request: ImageGenerationRequest) -> ImageGeneration
             image_size=request.image_size,
         ),
     }
-    if tools:
-        config_kwargs["tools"] = tools
 
     client_kwargs: dict[str, object] = {
         "http_options": types.HttpOptions(api_version=request.vertex_api_version),

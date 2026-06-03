@@ -83,7 +83,6 @@ class ImageGenerationAgent(BaseAgent):
             vertex_api_version=self.vertex.api_version,
             aspect_ratio=self.generation.aspect_ratio,
             image_size=self.generation.image_size,
-            use_google_search_grounding=self.generation.image_search_grounding,
         )
 
         result = await asyncio.to_thread(generate_building_design, request)

@@ -16,7 +16,6 @@ generation:
   output_dir: outputs
   aspect_ratio: "16:9"
   image_size: 2K
-  image_search_grounding: False
 
 agents:
   orchestrator_name: FacadeDesignPipeline

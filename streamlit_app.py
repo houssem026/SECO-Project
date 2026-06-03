@@ -200,10 +200,6 @@ def main() -> None:
                 if config.generation.image_size in {"1K", "2K", "4K"}
                 else 1,
             )
-            image_search_grounding = st.checkbox(
-                "Image model search grounding",
-                value=config.generation.image_search_grounding,
-            )
         with st.expander("Models", expanded=False):
             text_model = st.text_input("Text model", value=config.models.text)
             image_model = st.text_input("Image model", value=config.models.image)
@@ -272,7 +268,6 @@ def main() -> None:
                             image_size=image_size,
                             text_model=text_model,
                             image_model=image_model,
-                            image_search_grounding=image_search_grounding,
                         ),
                     )
                 )
