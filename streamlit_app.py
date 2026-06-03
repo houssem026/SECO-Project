@@ -70,13 +70,6 @@ def _upload_bytes(uploaded_file: object | None) -> bytes | None:
     return uploaded_file.getvalue()
 
 
-def _load_default_prompt() -> str:
-    prompt_path = Path("data/input_prompt")
-    if prompt_path.exists():
-        return prompt_path.read_text(encoding="utf-8").strip()
-    return ""
-
-
 def _render_uploaded_images(building_file: object | None, inspiration_file: object | None) -> None:
     st.markdown("#### Image Preview")
     cols = st.columns(2)
@@ -291,7 +284,15 @@ def main() -> None:
                     st.write("Returned image path:", result.generated_image_path or "(empty)")
                     st.write("Configured output directory:", output_dir)
 
-        with st.expander("Final prompt and notes", expanded=False):
+        with st.expander("Roadmap, prompt and notes", expanded=False):
+            implementation_plan = result.implementation_plan or result.final_text
+            if implementation_plan:
+                st.markdown("**Implementation roadmap**")
+                st.markdown(implementation_plan)
+            if result.roadmap_chart_path:
+                st.markdown("**Roadmap chart**")
+                st.code(result.roadmap_chart_path)
+
             prompt_text = _read_optional_text(result.prompt_path)
             if prompt_text:
                 st.markdown("**Image generation prompt**")
