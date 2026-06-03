@@ -11,8 +11,8 @@ from typing_extensions import override
 
 from google.adk.agents import BaseAgent, LlmAgent, SequentialAgent
 from google.adk.agents.invocation_context import InvocationContext
-from google.adk.events import Event
-from google.adk.tools import google_search
+from google.adk.events import Event, EventActions
+from google.adk.tools import FunctionTool, google_search
 from google.genai import types
 
 from scripts.config import DesignerConfig, GenerationConfig, ModelConfig, VertexConfig, load_config
@@ -20,8 +20,10 @@ from scripts.image_generator import (
     ImageGenerationRequest,
     generate_building_design,
 )
+from scripts.planning_tools import create_roadmap_chart
 from scripts.prompting import (
     build_generation_prompt,
+    build_implementation_planner_instruction,
     build_prompt_architect_instruction,
     build_research_instruction,
 )
@@ -91,6 +93,13 @@ class ImageGenerationAgent(BaseAgent):
         state["notes_path"] = str(result.notes_path)
         state["image_generation_model"] = result.model
 
+        state_delta = {
+            "generation_prompt": generation_prompt,
+            "generated_image_path": str(result.image_path),
+            "prompt_path": str(result.prompt_path),
+            "notes_path": str(result.notes_path),
+            "image_generation_model": result.model,
+        }
         message = (
             "Facade design generated.\n"
             f"Image: {result.image_path}\n"
@@ -101,6 +110,7 @@ class ImageGenerationAgent(BaseAgent):
         yield Event(
             author=self.name,
             content=types.Content(role="model", parts=[types.Part(text=message)]),
+            actions=EventActions(state_delta=state_delta),
         )
 
 
@@ -138,10 +148,28 @@ def build_agent(
         generation=config.generation,
     )
 
+    implementation_planner_agent = LlmAgent(
+        name=config.agents.planning_name,
+        model=text_model,
+        instruction=build_implementation_planner_instruction()
+        + "\n\nResearch notes:\n{research_notes}"
+        + "\n\nFinal image-generation prompt:\n{generation_prompt}"
+        + "\n\nGenerated image path:\n{generated_image_path}"
+        + "\n\nImage model notes path:\n{notes_path}",
+        description="Creates an execution roadmap, team plan, risks, and next actions for the facade transformation.",
+        tools=[google_search, FunctionTool(create_roadmap_chart)],
+        output_key="implementation_plan",
+    )
+
     return SequentialAgent(
         name=config.agents.orchestrator_name,
-        sub_agents=[research_agent, prompt_agent, image_generation_agent],
-        description="Runs facade design specialists in order: research, prompt, image generation.",
+        sub_agents=[
+            research_agent,
+            prompt_agent,
+            image_generation_agent,
+            implementation_planner_agent,
+        ],
+        description="Runs facade design specialists in order: research, prompt, image generation, implementation planning.",
     )
 
 

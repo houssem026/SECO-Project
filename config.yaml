@@ -22,3 +22,4 @@ agents:
   research_name: ArchitecturalResearcher
   prompt_name: PromptArchitect
   generation_name: BuildingImageGenerator
+  planning_name: ImplementationPlanner

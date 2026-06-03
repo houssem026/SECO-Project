@@ -55,6 +55,8 @@ async def run_pipeline(args: argparse.Namespace) -> dict[str, str]:
         "prompt_path": result.prompt_path,
         "notes_path": result.notes_path,
         "model": result.model,
+        "implementation_plan": result.implementation_plan,
+        "roadmap_chart_path": result.roadmap_chart_path,
     }
 
 
@@ -68,6 +70,8 @@ def main() -> None:
         print(f"Prompt file: {result['prompt_path']}")
     if result["notes_path"]:
         print(f"Notes file: {result['notes_path']}")
+    if result["roadmap_chart_path"]:
+        print(f"Roadmap chart: {result['roadmap_chart_path']}")
 
 
 if __name__ == "__main__":

@@ -77,6 +77,7 @@ class AgentNamesConfig:
     research_name: str
     prompt_name: str
     generation_name: str
+    planning_name: str
 
 
 @dataclass(frozen=True)
@@ -178,5 +179,6 @@ def load_config(config_path: str | Path | None = None) -> DesignerConfig:
             research_name=str(agents.get("research_name", "ArchitecturalResearcher")),
             prompt_name=str(agents.get("prompt_name", "PromptArchitect")),
             generation_name=str(agents.get("generation_name", "BuildingImageGenerator")),
+            planning_name=str(agents.get("planning_name", "ImplementationPlanner")),
         ),
     )

@@ -50,6 +50,47 @@ Return only the final image-generation prompt.
 """.strip()
 
 
+def build_implementation_planner_instruction() -> str:
+    return """
+You are a facade transformation implementation planner.
+
+Create a practical delivery roadmap for turning the generated facade concept into a real
+project. Use the research notes, the final image-generation prompt, the generated image file
+path, and the image model notes path from state. The final image-generation prompt is valuable
+because it captures the actual design direction sent to the image model: materials, facade
+system, mood, constraints, and preservation intent. Use Google Search only when you need
+current or local context about permits, facade systems, sustainability requirements,
+materials, or specialist roles.
+
+For every delivery phase, include an indicative estimated duration range based on the visible
+scope, facade complexity, approvals risk, procurement needs, and coordination effort. These
+are planning ranges, not committed calendar dates. Avoid generic default durations; if a phase
+cannot be responsibly estimated from the available context, write "to confirm after feasibility"
+and explain the missing dependency.
+After defining the delivery phases, call create_roadmap_chart once with a short project title,
+the ordered phase names, and matching estimated_durations. Include the returned roadmap chart
+path in your final answer.
+
+Return a clear, scannable plan with these sections:
+- Concept summary: what is changing and what should be preserved.
+- Delivery phases: discovery, feasibility, design development, approvals, procurement,
+  construction, quality control, and handover. Include an estimated duration for each phase.
+- Team and collaboration: client, architect, facade engineer, structural engineer,
+  energy/sustainability consultant, quantity surveyor/cost manager, permitting advisor,
+  contractor, specialist facade fabricator, site manager, and any other relevant roles.
+- Key technical studies: structure, fire safety, thermal performance, daylight/glare,
+  waterproofing, access/maintenance, heritage or urban-context review when relevant.
+- Material and procurement notes: likely facade families, mockups/samples, lead times,
+  cost and buildability cautions.
+- Risks and decisions: main unknowns, dependencies, and questions to resolve before execution.
+- Next 5 actions: concrete first steps for the project owner.
+
+Keep it grounded and professional. Do not claim this is a stamped engineering plan or legal
+permit advice. Avoid exact calendar dates or exact costs unless the user gave enough project
+data; use ranges and relative effort instead.
+""".strip()
+
+
 def build_generation_prompt(
     user_prompt: str,
     *,
