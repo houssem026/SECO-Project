@@ -51,6 +51,27 @@ def _inject_styles() -> None:
             color: #667085;
             word-break: break-all;
         }
+        div[data-testid="stMarkdownContainer"] table {
+            display: block;
+            width: 100%;
+            overflow-x: auto;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            margin: 0.75rem 0 1rem;
+        }
+        div[data-testid="stMarkdownContainer"] th,
+        div[data-testid="stMarkdownContainer"] td {
+            border: 1px solid #d0d5dd;
+            padding: 0.55rem 0.7rem;
+            vertical-align: top;
+        }
+        div[data-testid="stMarkdownContainer"] th {
+            background: #f2f4f7;
+            font-weight: 700;
+        }
+        div[data-testid="stMarkdownContainer"] tr:nth-child(even) td {
+            background: #f9fafb;
+        }
         </style>
         """,
         unsafe_allow_html=True,
@@ -124,6 +145,28 @@ def _read_optional_text(path_value: str) -> str:
     if not path.exists():
         return ""
     return path.read_text(encoding="utf-8").strip()
+
+
+def _existing_path(path_value: str) -> Path | None:
+    if not path_value:
+        return None
+    path = Path(path_value).expanduser()
+    if not path.is_absolute():
+        path = Path.cwd() / path
+    return path.resolve() if path.exists() else None
+
+
+def _render_report(result: PipelineResult) -> None:
+    implementation_plan = result.implementation_plan or result.final_text
+    if implementation_plan:
+        st.markdown("#### Implementation Report")
+        st.markdown(implementation_plan)
+    if result.implementation_report_path:
+        st.markdown("#### Markdown Report")
+        st.code(result.implementation_report_path)
+    if result.roadmap_image_path:
+        st.markdown("#### Roadmap Image Path")
+        st.code(result.roadmap_image_path)
 
 
 async def _run_and_render(
@@ -265,10 +308,10 @@ def main() -> None:
                     )
                 )
 
-    with output_col:
-        if not result:
-            return
+    if not result:
+        return
 
+    with output_col:
         with result_box:
             st.markdown("#### Generated Design")
             generated_image = _resolve_generated_image(result, output_dir)
@@ -284,24 +327,31 @@ def main() -> None:
                     st.write("Returned image path:", result.generated_image_path or "(empty)")
                     st.write("Configured output directory:", output_dir)
 
-        with st.expander("Roadmap, prompt and notes", expanded=False):
-            implementation_plan = result.implementation_plan or result.final_text
-            if implementation_plan:
-                st.markdown("**Implementation roadmap**")
-                st.markdown(implementation_plan)
-            if result.roadmap_chart_path:
-                st.markdown("**Roadmap chart**")
-                st.code(result.roadmap_chart_path)
+            roadmap_image_path = _existing_path(result.roadmap_image_path)
+            if roadmap_image_path:
+                st.markdown("#### Implementation Roadmap")
+                st.image(str(roadmap_image_path), use_container_width=True)
 
-            prompt_text = _read_optional_text(result.prompt_path)
-            if prompt_text:
-                st.markdown("**Image generation prompt**")
-                st.code(prompt_text)
+    st.markdown("---")
+    st.markdown("### Planning Report")
+    roadmap_image_path = _existing_path(result.roadmap_image_path)
+    if roadmap_image_path:
+        st.image(str(roadmap_image_path), use_container_width=True)
 
-            notes = _read_optional_text(result.notes_path)
-            if notes:
-                st.markdown("**Model notes**")
-                st.markdown(notes)
+    report_tab, files_tab = st.tabs(["Report", "Files and notes"])
+    with report_tab:
+        _render_report(result)
+
+    with files_tab:
+        prompt_text = _read_optional_text(result.prompt_path)
+        if prompt_text:
+            st.markdown("**Image generation prompt**")
+            st.code(prompt_text)
+
+        notes = _read_optional_text(result.notes_path)
+        if notes:
+            st.markdown("**Model notes**")
+            st.markdown(notes)
 
 
 if __name__ == "__main__":
