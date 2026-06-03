@@ -200,8 +200,27 @@ history:
   db_path: outputs/run_history.sqlite
 ```
 
-On GCP Vertex AI, no API key is required when the runtime has the right service account
-permissions and APIs enabled.
+## GCP and Vertex AI Runtime
+
+This solution is intended to run on Google Cloud Platform with Vertex AI APIs enabled.
+In that setup, no API key is needed. Authentication is handled by the GCP runtime and
+its service account, as long as the selected project has the required APIs enabled and
+the service account has permission to call Vertex AI / Gemini models.
+
+Practical setup notes:
+
+- Create or select a Google Cloud project.
+- Enable the required Vertex AI / Generative AI APIs for that project.
+- Make sure billing is active.
+- Run the app from a GCP environment or with Application Default Credentials locally.
+- Set the project and location in `config.yaml` or through environment variables.
+
+For experimentation, a new Google Cloud account may be eligible for Google's free trial
+program, commonly advertised as a limited-time trial with Cloud Billing credits. This is
+useful for trying different Gemini / Imagen models before deciding which model setup is
+best for the product. Always check the current Google Cloud Free Program terms because
+trial duration, credits, eligible services, and billing rules can change:
+https://docs.cloud.google.com/free/docs/free-cloud-features
 
 ## Run Locally
 
