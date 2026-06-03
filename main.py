@@ -5,14 +5,9 @@ from __future__ import annotations
 import argparse
 import asyncio
 from pathlib import Path
-from uuid import uuid4
 
-from google.adk.runners import Runner
-from google.adk.sessions import InMemorySessionService
-from google.genai import types
-
-from scripts.agent import build_agent
-from scripts.config import DEFAULT_CONFIG_PATH, load_config
+from scripts.config import DEFAULT_CONFIG_PATH
+from scripts.pipeline import PipelineInputs, PipelineOverrides, run_pipeline as run_agent_pipeline
 
 
 def _existing_image(path: str) -> Path:
@@ -44,72 +39,28 @@ def parse_args() -> argparse.Namespace:
 
 
 async def run_pipeline(args: argparse.Namespace) -> dict[str, str]:
-    config = load_config(args.config)
-    generation_config = config.generation
-    if args.output_dir:
-        generation_config = generation_config.with_updates(output_dir=Path(args.output_dir))
-    if args.aspect_ratio:
-        generation_config = generation_config.with_updates(aspect_ratio=args.aspect_ratio)
-    if args.image_size:
-        generation_config = generation_config.with_updates(image_size=args.image_size)
-    if args.image_search_grounding:
-        generation_config = generation_config.with_updates(image_search_grounding=True)
-
-    model_config = config.models
-    if args.image_model:
-        model_config = model_config.with_updates(image=args.image_model)
-    if args.text_model:
-        model_config = model_config.with_updates(text=args.text_model)
-
-    run_config = config.with_updates(
-        models=model_config,
-        generation=generation_config,
+    result = await run_agent_pipeline(
+        PipelineInputs(
+            building_image_path=args.building,
+            inspiration_image_path=args.inspiration,
+            user_prompt=args.prompt,
+        ),
+        PipelineOverrides(
+            config_path=args.config,
+            output_dir=Path(args.output_dir) if args.output_dir else None,
+            aspect_ratio=args.aspect_ratio,
+            image_size=args.image_size,
+            text_model=args.text_model,
+            image_model=args.image_model,
+            image_search_grounding=args.image_search_grounding,
+        ),
     )
-
-    session_id = f"session-{uuid4().hex}"
-    session_service = InMemorySessionService()
-    await session_service.create_session(
-        app_name=run_config.app.name,
-        user_id=run_config.app.user_id,
-        session_id=session_id,
-        state={
-            "building_image_path": str(args.building),
-            "inspiration_image_path": str(args.inspiration) if args.inspiration else "",
-            "user_prompt": args.prompt,
-        },
-    )
-
-    runner = Runner(
-        agent=build_agent(config=run_config),
-        app_name=run_config.app.name,
-        session_service=session_service,
-    )
-    message = types.Content(
-        role="user",
-        parts=[types.Part(text="Create the facade redesign using the session images and brief.")],
-    )
-
-    final_text = ""
-    async for event in runner.run_async(
-        user_id=run_config.app.user_id,
-        session_id=session_id,
-        new_message=message,
-    ):
-        if event.is_final_response() and event.content and event.content.parts:
-            final_text = event.content.parts[0].text or final_text
-
-    final_session = await session_service.get_session(
-        app_name=run_config.app.name,
-        user_id=run_config.app.user_id,
-        session_id=session_id,
-    )
-    state = final_session.state
     return {
-        "final_text": final_text,
-        "generated_image_path": state.get("generated_image_path", ""),
-        "prompt_path": state.get("prompt_path", ""),
-        "notes_path": state.get("notes_path", ""),
-        "model": state.get("image_generation_model", run_config.models.image),
+        "final_text": result.final_text,
+        "generated_image_path": result.generated_image_path,
+        "prompt_path": result.prompt_path,
+        "notes_path": result.notes_path,
+        "model": result.model,
     }
 
 

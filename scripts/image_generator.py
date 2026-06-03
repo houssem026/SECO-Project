@@ -48,11 +48,12 @@ def generate_building_design(request: ImageGenerationRequest) -> ImageGeneration
     from google import genai
     from google.genai import types
 
-    request.output_dir.mkdir(parents=True, exist_ok=True)
+    output_dir = request.output_dir.expanduser().resolve()
+    output_dir.mkdir(parents=True, exist_ok=True)
     stamp = datetime.utcnow().strftime("%Y%m%d-%H%M%S")
-    image_path = request.output_dir / f"facade-design-{stamp}.png"
-    prompt_path = request.output_dir / "latest_prompt.txt"
-    notes_path = request.output_dir / "latest_notes.txt"
+    image_path = output_dir / f"facade-design-{stamp}.png"
+    prompt_path = output_dir / "latest_prompt.txt"
+    notes_path = output_dir / "latest_notes.txt"
 
     image_paths = [request.building_image_path]
     if request.inspiration_image_path:
